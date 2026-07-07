@@ -1,0 +1,35 @@
+# Ignore common Python artifacts and secrets
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Virtual environments
+.env
+.env.*
+venv/
+ENV/
+env/
+
+# Pytest cache
+.pytest_cache/
+
+# IDEs
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Secret files
+secrets.json
+
+# Docker
+docker-compose.override.yml
+
