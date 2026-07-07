@@ -1,0 +1,383 @@
+---
+# XNeo-AGI-Core System Blueprint
+# Level 5 Autonomous Operational System
+# Architecture: GIQNexusV3 with Triple-Slice Logic
+
+name: XNeo-AGI-Core
+version: 1.1.0
+operational_mode: LEVEL_5_AUTONOMOUS
+architecture: GIQNexusV3
+created_at: 2026-07-07
+maintainer: Xscript-Fixed-Admin
+
+# Core Principles: Absolute Symmetry
+principles:
+  - absolute_symmetry: "All components mirror constraints and interfaces"
+  - modular_decoupling: "Zero cross-module dependencies without explicit contracts"
+  - zero_latency_internal_comm: "gRPC + async queues for sub-100ms orchestration"
+  - least_privilege_security: "Service accounts, KMS wrapping, secret rotation"
+  - self_optimization: "Quantum-Sieve adapts thresholds per real-time metrics"
+  - proactive_defense: "Sentinel pre-commit validation + runtime redaction"
+
+# GIQNexusV3: Triple-Slice Logic Engine
+components:
+  core_logic:
+    name: GIQNexusV3
+    version: 3.0.0
+    description: "Orchestrates three concurrently-running logic slices for historical, real-time, and predictive processing"
+    
+    slices:
+      alpha:
+        role: "Historical / Batch Processing"
+        latency_budget: "0-500ms"
+        throughput_target: "1000-10000 req/s"
+        queue_depth_limit: 50000
+        backpressure_threshold: 0.85
+        
+      beta:
+        role: "Real-Time Processing"
+        latency_budget: "10-100ms"
+        throughput_target: "10000-100000 req/s"
+        queue_depth_limit: 100000
+        backpressure_threshold: 0.75
+        
+      gamma:
+        role: "Predictive Simulation"
+        latency_budget: "100-2000ms"
+        throughput_target: "100-1000 req/s"
+        queue_depth_limit: 10000
+        backpressure_threshold: 0.90
+    
+    interfaces:
+      internal_api:
+        protocol: "async (gRPC + message broker)"
+        transport: "gRPC bidirectional streams + Cloud Pub/Sub"
+        envelope_format: "JSON with headers, metadata, vector_ref"
+        serialization: "protobuf for gRPC, JSON for queues"
+        
+      middleware_hooks:
+        - quantum_sieve: "Per-request QoS, scoring, adaptive routing"
+        - proactive_sentinel: "Pre-commit SAST, runtime redaction, secret gating"
+    
+    contracts:
+      envelope_structure:
+        required_fields:
+          - id: "UUID v4, unique per request"
+          - timestamp: "ISO8601 creation time"
+          - slice_hint: "alpha|beta|gamma preference"
+          - metadata: "JSON object with user-defined context"
+          - vector: "Optional embedding / state vector"
+          - vector_dim: "Dimensionality of vector space"
+        optional_fields:
+          - priority: "0-100 (default: 50)"
+          - ttl: "Seconds to live (default: 3600)"
+          - mTLS_cert_ref: "KMS-wrapped client cert reference"
+
+  quantum_sieve:
+    name: Quantum-Sieve Middleware
+    description: "Adaptive filtering, prioritization, and load balancing across slices"
+    
+    features:
+      - per_request_scoring: "Combines priority, slice_hint, metadata to score requests"
+      - dynamic_thresholds: "Adapts acceptance thresholds based on CPU load, queue depth, observed latency"
+      - probabilistic_acceptance: "sigmoid(score - threshold) with temperature parameter"
+      - starvation_prevention: "Enforces min_accept_rate per slice"
+      - metrics_and_observability: "Exposes accept/reject counts, latency percentiles, queue stats"
+    
+    config:
+      temperature: 1.0
+      min_accept_rate_alpha: 0.05
+      min_accept_rate_beta: 0.10
+      min_accept_rate_gamma: 0.02
+      sample_interval_ms: 100
+      exponential_backoff_base: 1.5
+      max_backoff_ms: 30000
+    
+    metrics_exposed:
+      - accepted_count_per_slice
+      - rejected_count_per_slice
+      - avg_latency_ms_per_slice
+      - queue_depth_per_slice
+      - cpu_load_moving_avg
+      - priority_distribution
+      - ttl_violations_count
+
+  sovereign_interface:
+    name: "Sovereign Interface (REST + gRPC)"
+    description: "Public-facing entry point with mTLS + JWT authentication"
+    
+    endpoints:
+      rest_api:
+        protocol: "HTTPS (TLS 1.3)"
+        auth_scheme: "JWT signed by KMS"
+        mTLS: true
+        base_url: "https://xneo-api.example.com/v1"
+        routes:
+          - path: "/sovereign/execute"
+            method: "POST"
+            description: "Submit request to GIQNexusV3"
+            request_envelope: "as per contract"
+            response: "{status: ok|error, result: {...}, latency_ms: N, routed_slice: alpha|beta|gamma}"
+          
+          - path: "/sovereign/status"
+            method: "GET"
+            description: "Health check and operational metrics"
+            auth: "optional (public with rate limit)"
+            response: "{operational_mode: LEVEL_5_AUTONOMOUS, uptime_s: N, slices_status: {...}}"
+          
+          - path: "/sovereign/metrics"
+            method: "GET"
+            description: "Prometheus metrics export"
+            auth: "required (service account)"
+            response: "text/plain Prometheus format"
+      
+      grpc_api:
+        protocol: "gRPC over TLS"
+        service_name: "XNeo.Sovereign"
+        methods:
+          - rpc_execute: "Bidirectional stream for high-throughput clients"
+          - rpc_stream_status: "Server-sent metrics stream"
+    
+    symmetry_verification:
+      method: "8888-SYMMETRY-8888 header"
+      description: "KMS-signed verification token included in response headers"
+      rotation_interval: "86400s (24 hours)"
+      fallback_key: "secret://xneo-root-symmetry (Google Secret Manager)"
+
+  data_architecture:
+    name: "XNeo_Memory_Vault"
+    description: "Unified storage for ephemeral state, vectors, and audit logs"
+    
+    primary_store:
+      type: "Google BigQuery"
+      dataset: "XNeo_Memory_Vault"
+      location: "US"
+      
+      tables:
+        - name: "request_log"
+          description: "Complete audit trail of all requests"
+          ttl_days: 90
+          columns:
+            - id: STRING (REQUIRED)
+            - timestamp: TIMESTAMP (REQUIRED)
+            - slice: STRING (alpha|beta|gamma)
+            - request_envelope: JSON
+            - response: JSON
+            - latency_ms: INTEGER
+            - status: STRING (ok|error)
+            - error_code: STRING (nullable)
+            - user_fingerprint: STRING (hashed, for audit)
+        
+        - name: "vector_store"
+          description: "Embedding vectors from Gamma predictions"
+          ttl_days: 30
+          columns:
+            - id: STRING (REQUIRED)
+            - created_at: TIMESTAMP (REQUIRED)
+            - vector_dim: INTEGER
+            - vector: FLOAT64 (REPEATED, up to 2048 dims)
+            - metadata: JSON
+            - source_slice: STRING
+            - confidence: FLOAT64
+        
+        - name: "system_metrics"
+          description: "Time-series of GIQNexusV3 health and performance"
+          columns:
+            - timestamp: TIMESTAMP (REQUIRED, clustered)
+            - slice: STRING (REQUIRED)
+            - queue_depth: INTEGER
+            - cpu_load: FLOAT64
+            - latency_p50_ms: INTEGER
+            - latency_p95_ms: INTEGER
+            - latency_p99_ms: INTEGER
+            - throughput_req_s: INTEGER
+            - error_rate: FLOAT64
+    
+    ephemeral_cache:
+      type: "Google Firestore (Realtime Database alternative)"
+      namespace: "xneo-state"
+      ttl_seconds: 3600
+      purpose: "In-flight request state, session tokens, slice affinity"
+    
+    vector_embedding:
+      dimension: 1024 # Configurable, default 1024
+      embedding_model: "google/text-embedding-004"
+      refresh_strategy: "Lazy on-demand or batch daily"
+      storage_format: "FLOAT64 REPEATED in BigQuery"
+
+  security_layer:
+    name: "Proactive Sentinel"
+    description: "Multi-layered defense: pre-commit, runtime, and cryptographic validation"
+    
+    pre_commit_validation:
+      tools:
+        - ruff: "Python linting and formatting"
+        - bandit: "Static security analysis (secrets, SQL injection)"
+        - git-secrets: "Detect hardcoded secrets and API keys"
+        - trivy: "Container image scanning (CVE detection)"
+      hooks: "Pre-commit hooks block commits with high-severity findings"
+    
+    runtime_redaction:
+      patterns:
+        - api_keys: "/(?:[A-Za-z0-9_\\-]{20,})/g -> [REDACTED_TOKEN]"
+        - emails: "/\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b/g -> [REDACTED_EMAIL]"
+        - phone_numbers: "/\\b\\d{3}-\\d{3}-\\d{4}\\b/g -> [REDACTED_PHONE]"
+      log_level: "DEBUG (redacted before INFO)"
+    
+    kms_integration:
+      provider: "Google Cloud KMS"
+      keyring: "xneo-keyring"
+      symmetric_key: "xneo-sym-key"
+      asymmetric_key: "xneo-asym-key (for envelope encryption)"
+      rotation_interval: "90 days"
+      use_cases:
+        - jwt_signing: "Sign/verify tokens"
+        - secret_wrapping: "Encrypt service account keys"
+        - envelope_encryption: "Two-tier encryption for sensitive payloads"
+    
+    secret_management:
+      provider: "Google Secret Manager"
+      secrets:
+        - xneo-root-symmetry: "Root key for symmetry verification"
+        - xneo-jwt-signing-key: "EdDSA private key for JWT"
+        - xneo-service-account-key: "GCP service account JSON"
+        - xneo-mTLS-ca-cert: "Intermediate CA certificate"
+      rotation_policy: "90-day automatic rotation with versioning"
+    
+    network_security:
+      firewall_rules:
+        - allow_gcp_cloud_run: "From Cloud Run internal IP ranges"
+        - allow_gke_pods: "From GKE cluster CIDR (if applicable)"
+        - block_public_metadata: "Drop requests to GCP metadata service"
+      binary_authorization: "Enabled for production container deployments"
+
+  deployment_target:
+    platform: "Google Cloud Platform (GCP)"
+    compute_options:
+      primary: "Cloud Run (managed, serverless)"
+      alternative: "GKE Autopilot (Kubernetes, for long-running workloads)"
+    
+    configuration:
+      region: "us-central1"
+      service_account: "xneo-run-sa@{PROJECT_ID}.iam.gserviceaccount.com"
+      container_image: "gcr.io/{PROJECT_ID}/xneo-backend:latest"
+      memory: "2Gi"
+      cpu: "2"
+      timeout: "3600s"
+      concurrency: "80"
+      environment_variables:
+        XNEO_ENV: "production"
+        GCP_PROJECT: "{PROJECT_ID}"
+        BIGQUERY_DATASET: "XNeo_Memory_Vault"
+        FIRESTORE_NAMESPACE: "xneo-state"
+    
+    networking:
+      vpc_connector: "xneo-vpc-connector (Serverless VPC Access)"
+      ingress: "internal (load balancer only)"
+      egress_policy: "private (via VPC)"
+    
+    monitoring:
+      logging: "Cloud Logging (all requests, errors, warnings)"
+      tracing: "Cloud Trace (latency attribution per slice)"
+      profiling: "Cloud Profiler (CPU/memory on sampled requests)"
+      alerting: "Cloud Monitoring (Uptime checks, error budget alerts)"
+
+# CI/CD Pipeline
+ci_cd:
+  platform: "GitHub Actions"
+  workflows:
+    - name: "test.yml"
+      triggers: [push, pull_request]
+      jobs:
+        - unit_tests: "pytest src/tests/unit/"
+        - integration_tests: "pytest src/tests/integration/ (requires GCP credentials)"
+        - static_analysis: "ruff, bandit, git-secrets"
+        - coverage: "pytest --cov=src (minimum 80%)"
+    
+    - name: "build-and-deploy.yml"
+      triggers: [push to main]
+      jobs:
+        - build: "docker build -t gcr.io/.../xneo-backend:${GITHUB_SHA::8} ."
+        - scan: "trivy image --severity HIGH,CRITICAL gcr.io/.../xneo-backend:tag"
+        - push: "docker push gcr.io/.../xneo-backend:tag"
+        - deploy: "gcloud run deploy xneo-cloud-brain --image=... --region=us-central1"
+    
+    - name: "terraform-plan.yml"
+      triggers: [push to main, pull_request]
+      jobs:
+        - terraform_init: "cd terraform && terraform init"
+        - terraform_plan: "terraform plan -out=tfplan"
+        - upload_artifact: "Save tfplan for manual review"
+    
+    - name: "terraform-apply.yml"
+      triggers: [manual approval in GitHub]
+      jobs:
+        - terraform_apply: "terraform apply tfplan"
+        - post_deployment_test: "Health checks, smoke tests"
+
+# Operational Runbooks
+operational_modes:
+  level_5_autonomous:
+    description: "System operates fully autonomously with minimal human intervention"
+    features:
+      - self_healing: "Detects and recovers from transient failures"
+      - auto_scaling: "Queue depths trigger horizontal scaling decisions"
+      - adaptive_routing: "Quantum-Sieve adjusts slice affinity dynamically"
+      - predictive_alerts: "Gamma slice predicts anomalies before they occur"
+    
+    degradation_modes:
+      - slice_failure: "If Beta fails, route 70% to Alpha, 30% to Gamma"
+      - high_latency: "Increase temperature parameter, stricter backpressure"
+      - secret_rotation: "Seamless key rotation without service restart"
+
+# Security Audit Trail
+audit:
+  required_logs:
+    - all_api_requests: "Stored in BigQuery request_log table"
+    - secret_access: "Google Secret Manager audit logs"
+    - kms_operations: "Google Cloud KMS operation logs"
+    - terraform_changes: "GitHub Actions run logs + GCP Cloud Audit Logs"
+  
+  retention_policy:
+    sensitive_logs: "90 days (encrypted)"
+    system_metrics: "30 days (unencrypted)"
+    audit_trail: "2 years (compliance requirement)"
+
+# Dependencies & External Services
+external_dependencies:
+  google_cloud_services:
+    - Cloud Run (compute)
+    - BigQuery (data warehouse)
+    - Firestore (ephemeral cache)
+    - KMS (key management)
+    - Secret Manager (secrets)
+    - Cloud Logging (observability)
+    - Cloud Trace (distributed tracing)
+    - Cloud Monitoring (metrics & alerting)
+  
+  python_packages:
+    - fastapi: "REST framework"
+    - uvicorn: "ASGI server"
+    - grpcio: "gRPC library"
+    - google-cloud-bigquery: "BigQuery client"
+    - google-cloud-kms: "KMS wrapper"
+    - google-cloud-secret-manager: "Secrets client"
+    - pytest: "Testing framework"
+    - pydantic: "Data validation"
+
+# Version History
+versions:
+  1.1.0:
+    date: 2026-07-07
+    changes:
+      - "GIQNexusV3 engine with Triple-Slice logic"
+      - "Quantum-Sieve middleware for adaptive routing"
+      - "Proactive Sentinel security layer"
+      - "Sovereign Interface with mTLS + JWT"
+      - "BigQuery + Firestore data architecture"
+      - "Terraform IaC templates"
+      - "GitHub Actions CI/CD"
+
+# Status: ACTIVE
+# Last Updated: 2026-07-07
+# Operational: Level 5 Autonomous
