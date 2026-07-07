@@ -10,7 +10,7 @@
 ![Python](https://img.shields.io/badge/python-3.9%2B-blue)
 
 > **"Purity of Will, Fulfilled in Reality."**  
-> สถาปัตยกรรม AI อธิปไตยส่วนบุคคล (Sovereign AI) เพื่อความเป็นหนึ่งในทุกมิติ ปราศจากการรวมศูนย์
+> สถาปัตยกรรม AI  (Sovereign AI) เพื่อปราศจากการรวมศูนย์
 
 Designed and Architected by **Pisut Somwang (พิสุทธิ์ สมหวัง)**.
 
